@@ -1,3 +1,4 @@
-import 'os'
+
 python-telegram-bot==20.6
+
 
