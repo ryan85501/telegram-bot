@@ -1,5 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes
+
 import os
 # Replace with your bot token
 TOKEN =os.getenv("8361381103:AAHsALmGWe5LPrqUZKpAQzAAOeSgqy3buQE")
@@ -39,4 +38,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
