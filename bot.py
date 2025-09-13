@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 # Get environment variables (from Render dashboard)
 TOKEN = os.getenv("8361381103:AAHsALmGWe5LPrqUZKpAQzAAOeSgqy3buQE")
 ALLOWED_GROUP_ID = int(os.getenv("-1002994271767", "0"))
-MINI_APP_URL = os.getenv("MINI_APP_URL", ""https://ryan85501.github.io/Shwe-Pat-Tee/")
+MINI_APP_URL = os.getenv("MINI_APP_URL", "https://ryan85501.github.io/Shwe-Pat-Tee/")
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -43,3 +43,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
