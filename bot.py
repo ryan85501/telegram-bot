@@ -8,7 +8,7 @@ ALLOWED_GROUP_ID = int(os.getenv("ALLOWED_GROUP_ID", "0"))
 MINI_APP_URL = os.getenv("MINI_APP_URL", "https://ryan85501.github.io/Shwe-Pat-Tee/")
 
 # /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update, context):
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
         await update.message.reply_text("❌ This bot only works inside the group.")
@@ -43,6 +43,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
