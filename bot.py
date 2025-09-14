@@ -1,5 +1,5 @@
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Get environment variables (from Render dashboard)
@@ -43,5 +43,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
