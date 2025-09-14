@@ -1,5 +1,5 @@
 import os
- 
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo  # Added missing imports
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Get environment variables (from Render dashboard)
@@ -8,7 +8,7 @@ ALLOWED_GROUP_ID = int(os.getenv("ALLOWED_GROUP_ID", "0"))
 MINI_APP_URL = os.getenv("MINI_APP_URL", "https://ryan85501.github.io/Shwe-Pat-Tee/")
 
 # /start command
-async def start(update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):  # Added type annotations for consistency
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
         await update.message.reply_text("❌ This bot only works inside the group.")
@@ -43,8 +43,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
