@@ -25,6 +25,7 @@ async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ This bot only works inside the group.")
         return
 
+    # Fixed button creation - use the correct parameter name
     keyboard = [
         [InlineKeyboardButton("🚀 Open App", web_app=WebAppInfo(url=MINI_APP_URL))]
     ]
