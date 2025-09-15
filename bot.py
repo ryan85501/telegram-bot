@@ -1,6 +1,8 @@
 import os
 import logging
 import asyncio
+import telegram
+print(f"Telegram bot version: {telegram.__version__}")
 from queue import Queue
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Updater, CommandHandler, CallbackContext, Application
@@ -83,3 +85,4 @@ if __name__ == "__main__":
     
     # Run the bot
     run_bot()
+
