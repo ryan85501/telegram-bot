@@ -11,7 +11,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get bot token from environment variable
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+TOKEN = os.environ.get('TOKEN')
 # Get allowed group ID from environment variable
 ALLOWED_GROUP_ID = os.environ.get('ALLOWED_GROUP_ID')
 
@@ -84,3 +84,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
