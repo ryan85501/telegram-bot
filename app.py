@@ -1,7 +1,6 @@
 import os
 import logging
 from telegram import Update, Bot
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from flask import Flask, request
 import asyncio
 
@@ -34,9 +33,6 @@ app = Flask(__name__)
 # Create bot instance
 bot = Bot(token=BOT_TOKEN)
 
-# Create application without updater
-application = Application.builder().token(BOT_TOKEN).build()
-
 async def is_member_of_allowed_group(user_id: int) -> bool:
     """Check if the user is a member of the allowed group"""
     try:
@@ -52,21 +48,37 @@ async def is_member_of_allowed_group(user_id: int) -> bool:
     
     return False
 
-async def process_update(update: Update):
+async def process_update(update_data):
     """Process incoming update"""
-    user_id = update.effective_user.id
-    
-    if not await is_member_of_allowed_group(user_id):
-        await update.message.reply_text("Sorry, this bot is only available to members of the specific group.")
-        return
+    try:
+        update = Update.de_json(update_data, bot)
+        user_id = update.effective_user.id
         
-    if update.message and update.message.text:
-        if update.message.text.startswith('/start'):
-            await update.message.reply_text('Hello! I am your group-exclusive bot. How can I help you?')
-        elif update.message.text.startswith('/help'):
-            await update.message.reply_text('Help information goes here.')
-        else:
-            await update.message.reply_text(update.message.text)
+        if not await is_member_of_allowed_group(user_id):
+            await bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Sorry, this bot is only available to members of the specific group."
+            )
+            return
+        
+        if update.message and update.message.text:
+            if update.message.text.startswith('/start'):
+                await bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text='Hello! I am your group-exclusive bot. How can I help you?'
+                )
+            elif update.message.text.startswith('/help'):
+                await bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text='Help information goes here.'
+                )
+            else:
+                await bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=update.message.text
+                )
+    except Exception as e:
+        logger.error(f"Error processing update: {e}")
 
 @app.route('/')
 def index():
@@ -76,13 +88,15 @@ def index():
 def webhook():
     """Webhook route for Telegram to send updates to"""
     try:
-        # Process the update
-        update = Update.de_json(request.get_json(), bot)
-        # Run the async function in the event loop
-        asyncio.run(process_update(update))
+        # Get the update from Telegram
+        update_data = request.get_json()
+        
+        # Process the update asynchronously
+        asyncio.run(process_update(update_data))
+        
         return 'OK'
     except Exception as e:
-        logger.error(f"Error processing update: {e}")
+        logger.error(f"Error in webhook: {e}")
         return 'Error', 500
 
 if __name__ == '__main__':
