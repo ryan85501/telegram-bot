@@ -3,7 +3,7 @@ from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", 8443))
 
 app = Flask(__name__)
@@ -38,3 +38,4 @@ if __name__ == "__main__":
         webhook_url=f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
     )
     app.run(host="0.0.0.0", port=PORT)
+
