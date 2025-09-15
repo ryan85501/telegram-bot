@@ -1,8 +1,8 @@
-from flask import Flask, request
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackContext
 import os
 import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from flask import Flask, request
 
 # Enable logging
 logging.basicConfig(
@@ -39,7 +39,7 @@ async def is_member_of_allowed_group(update: Update) -> bool:
     
     try:
         # Get chat member status in the allowed group
-        chat_member = await update.get_bot().get_chat_member(ALLOWED_GROUP_ID, user_id)
+        chat_member = await application.bot.get_chat_member(ALLOWED_GROUP_ID, user_id)
         status = chat_member.status
         
         # Check if user is a member, admin, or creator of the group
@@ -89,7 +89,7 @@ async def webhook():
     try:
         # Process the update
         update = Update.de_json(request.get_json(), application.bot)
-        await application.process_update(update)
+        await application.update_queue.put(update)
         return 'OK'
     except Exception as e:
         logger.error(f"Error processing update: {e}")
