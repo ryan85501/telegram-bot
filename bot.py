@@ -1,7 +1,9 @@
 import os
 import logging
+import asyncio
+from queue import Queue
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackContext, Application
 from flask import Flask
 from threading import Thread
 
@@ -26,7 +28,7 @@ MINI_APP_URL = os.getenv("MINI_APP_URL", "https://ryan85501.github.io/Shwe-Pat-T
 PORT = int(os.environ.get('PORT', 5000))
 
 # /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
         await update.message.reply_text("❌ This bot only works inside the group.")
@@ -34,7 +36,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is active in this group!")
 
 # /open command → launches Mini App
-async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def open_app(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
         await update.message.reply_text("❌ This bot only works inside the group.")
@@ -50,20 +52,28 @@ async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def run_flask():
     app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False)
 
-async def run_bot():
+def run_bot():
     if not TOKEN:
         raise ValueError("❌ TOKEN is missing. Set it in Render Environment Variables.")
 
-    # Create Application
-    application = Application.builder().token(TOKEN).build()
+    # Create an update queue
+    update_queue = Queue()
     
+    # Create updater with the queue
+    updater = Updater(TOKEN, update_queue=update_queue)
+    
+    # Get the dispatcher to register handlers
+    dispatcher = updater.dispatcher
+
     # Register command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("open", open_app))
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("open", open_app))
 
     # Start the Bot with polling
-    print("🤖 Bot is running...")
-    await application.run_polling()
+    updater.start_polling()
+    
+    # Run the bot until you press Ctrl-C
+    updater.idle()
 
 if __name__ == "__main__":
     # Start Flask in a separate thread for health checks
@@ -72,5 +82,4 @@ if __name__ == "__main__":
     flask_thread.start()
     
     # Run the bot
-    import asyncio
-    asyncio.run(run_bot())
+    run_bot()
