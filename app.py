@@ -3,8 +3,7 @@ import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from flask import Flask, request
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -13,11 +12,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get bot token from environment variable
-TOKEN = os.environ.get('TOKEN')
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
 # Get allowed group ID from environment variable
 ALLOWED_GROUP_ID = os.environ.get('ALLOWED_GROUP_ID')
 
-if not TOKEN or not ALLOWED_GROUP_ID:
+if not BOT_TOKEN or not ALLOWED_GROUP_ID:
     logger.error("Please set BOT_TOKEN and ALLOWED_GROUP_ID environment variables")
     exit(1)
 
@@ -32,7 +31,7 @@ except ValueError:
 app = Flask(__name__)
 
 # Create Application
-application = Application.builder().token(TOKEN).build()
+application = Application.builder().token(BOT_TOKEN).build()
 
 async def is_member_of_allowed_group(update: Update) -> bool:
     """Check if the user is a member of the allowed group"""
@@ -85,12 +84,12 @@ def index():
     return 'Bot is running!'
 
 @app.route('/webhook', methods=['POST'])
-async def webhook():
+def webhook():
     """Webhook route for Telegram to send updates to"""
     try:
         # Process the update
         update = Update.de_json(request.get_json(), application.bot)
-        await application.update_queue.put(update)
+        application.update_queue.put_nowait(update)
         return 'OK'
     except Exception as e:
         logger.error(f"Error processing update: {e}")
