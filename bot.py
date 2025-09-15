@@ -1,39 +1,8 @@
 import os
-import sys
-
-# Add a shim for imghdr if it's not available (for Python 3.13+)
-try:
-    import imghdr
-except ModuleNotFoundError:
-    # Create a simple imghdr shim
-    class ImghdrShim:
-        @staticmethod
-        def what(file, h=None):
-            # Simple implementation that checks common image formats
-            if h is None:
-                with open(file, 'rb') as f:
-                    h = f.read(32)
-            
-            if h.startswith(b'\xff\xd8\xff'):
-                return 'jpeg'
-            elif h.startswith(b'\x89PNG\r\n\x1a\n'):
-                return 'png'
-            elif h.startswith(b'GIF87a') or h.startswith(b'GIF89a'):
-                return 'gif'
-            elif h.startswith(b'BM'):
-                return 'bmp'
-            elif h.startswith(b'RIFF') and h[8:12] == b'WEBP':
-                return 'webp'
-            return None
-    
-    # Add to sys.modules so telegram can import it
-    sys.modules['imghdr'] = ImghdrShim()
-
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from flask import Flask
-from threading import Thread
 
 # Set up logging
 logging.basicConfig(
@@ -77,15 +46,12 @@ def open_app(update: Update, context: CallbackContext):
 
     update.message.reply_text("Click below to open the app:", reply_markup=reply_markup)
 
-def run_flask():
-    app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False)
-
-def run_bot():
+def main():
     if not TOKEN:
         raise ValueError("❌ TOKEN is missing. Set it in Render Environment Variables.")
 
     # Use the older Updater pattern instead of Application
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater(TOKEN)
     
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -102,9 +68,10 @@ def run_bot():
 
 if __name__ == "__main__":
     # Start Flask in a separate thread for health checks
-    flask_thread = Thread(target=run_flask)
+    import threading
+    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False))
     flask_thread.daemon = True
     flask_thread.start()
     
     # Run the bot
-    run_bot()
+    main()
