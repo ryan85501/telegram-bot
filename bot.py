@@ -15,7 +15,7 @@ TOKEN = os.environ.get('TOKEN')
 # Get allowed group ID from environment variable
 ALLOWED_GROUP_ID = os.environ.get('ALLOWED_GROUP_ID')
 
-if not BOT_TOKEN or not ALLOWED_GROUP_ID:
+if not TOKEN or not ALLOWED_GROUP_ID:
     logger.error("Please set BOT_TOKEN and ALLOWED_GROUP_ID environment variables")
     exit(1)
 
@@ -70,7 +70,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     """Start the bot."""
     # Create the Application
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(TOKEN).build()
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
@@ -84,4 +84,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
