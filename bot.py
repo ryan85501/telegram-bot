@@ -1,8 +1,15 @@
 import os
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackContext
 from flask import Flask
-from threading import Thread
+
+# Set up logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app for health checks
 app = Flask(__name__)
@@ -18,18 +25,18 @@ MINI_APP_URL = os.getenv("MINI_APP_URL", "https://ryan85501.github.io/Shwe-Pat-T
 PORT = int(os.environ.get('PORT', 5000))
 
 # /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
-        await update.message.reply_text("❌ This bot only works inside the group.")
+        update.message.reply_text("❌ This bot only works inside the group.")
         return
-    await update.message.reply_text("✅ Bot is active in this group!")
+    update.message.reply_text("✅ Bot is active in this group!")
 
 # /open command → launches Mini App
-async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def open_app(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if chat_id != ALLOWED_GROUP_ID:
-        await update.message.reply_text("❌ This bot only works inside the group.")
+        update.message.reply_text("❌ This bot only works inside the group.")
         return
 
     keyboard = [
@@ -37,27 +44,34 @@ async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text("Click below to open the app:", reply_markup=reply_markup)
+    update.message.reply_text("Click below to open the app:", reply_markup=reply_markup)
 
-def run_flask():
-    app.run(host='0.0.0.0', port=PORT)
-
-def run_bot():
+def main():
     if not TOKEN:
         raise ValueError("❌ TOKEN is missing. Set it in Render Environment Variables.")
 
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("open", open_app))
+    # Use the older Updater pattern instead of Application
+    updater = Updater(TOKEN)
+    
+    # Get the dispatcher to register handlers
+    dispatcher = updater.dispatcher
 
-    print("🤖 Bot is running...")
-    application.run_polling()
+    # Register command handlers
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("open", open_app))
+
+    # Start the Bot with polling
+    updater.start_polling()
+    
+    # Run the bot until you press Ctrl-C
+    updater.idle()
 
 if __name__ == "__main__":
     # Start Flask in a separate thread for health checks
-    flask_thread = Thread(target=run_flask)
+    import threading
+    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False))
     flask_thread.daemon = True
     flask_thread.start()
     
-    # Run the bot in the main thread
-    run_bot()
+    # Run the bot
+    main()
