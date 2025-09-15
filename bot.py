@@ -3,11 +3,6 @@ import os
 import sys
 import logging
 from flask import Flask, request
-
-# Fix for imghdr removal in Python 3.13
-import imghdr_pure as imghdr
-sys.modules['imghdr'] = imghdr
-
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
@@ -57,3 +52,4 @@ if __name__ == "__main__":
 
     # Run Flask app
     app.run(host="0.0.0.0", port=PORT)
+
