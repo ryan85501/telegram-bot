@@ -1,3 +1,8 @@
+# at the very top of bot.py
+import imghdr_pure as imghdr
+import sys
+sys.modules['imghdr'] = imghdr
+
 import os
 import logging
 import threading
@@ -46,3 +51,4 @@ if __name__ == "__main__":
     # Start Flask server (Render requires this)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
