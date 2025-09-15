@@ -1,54 +1,59 @@
-# at the very top of bot.py
-import imghdr_pure as imghdr
+# --- Telegram Bot Server with Flask ---
+import os
 import sys
+import logging
+from flask import Flask, request
+
+# Fix for imghdr removal in Python 3.13
+import imghdr_pure as imghdr
 sys.modules['imghdr'] = imghdr
 
-import os
-import logging
-import threading
-from flask import Flask
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# === Telegram Bot Token ===
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # set in Render env vars
+# --- Config ---
+TOKEN = os.getenv("TELEGRAM_TOKEN")  # Set in Render Dashboard
+PORT = int(os.environ.get("PORT", 8443))  # Render assigns a PORT env var
 
-# === Logging ===
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# === Flask server for Render health check ===
+# --- Flask app (for Render web service) ---
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return "Bot is running!"
+# --- Logging ---
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# === Telegram Bot Handlers ===
-def start(update, context):
-    update.message.reply_text("Hello 👋 I am alive on Render!")
+# --- Telegram Bot Handlers ---
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("Hello! 🎉 I’m alive on Render 🚀")
 
-def echo(update, context):
+def echo(update: Update, context: CallbackContext):
     update.message.reply_text(update.message.text)
 
-def run_telegram_bot():
-    updater = Updater(TELEGRAM_TOKEN, use_context=True)
+# --- Initialize Updater/Dispatcher ---
+updater = Updater(TOKEN, use_context=True)
+dispatcher = updater.dispatcher
 
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-    # Start polling
-    updater.start_polling()
-    updater.idle()
+# --- Flask route for webhook ---
+@app.route("/" + TOKEN, methods=["POST"])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), updater.bot)
+    dispatcher.process_update(update)
+    return "ok"
 
-# === Main entry ===
+@app.route("/")
+def index():
+    return "Bot is running ✅"
+
+# --- Run app ---
 if __name__ == "__main__":
-    # Start Telegram bot in separate thread
-    threading.Thread(target=run_telegram_bot, daemon=True).start()
+    # Set webhook to Render URL
+    WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
+    updater.bot.set_webhook(WEBHOOK_URL)
+    print(f"📡 Webhook set to {WEBHOOK_URL}")
 
-    # Start Flask server (Render requires this)
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    # Run Flask app
+    app.run(host="0.0.0.0", port=PORT)
