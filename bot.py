@@ -1,55 +1,39 @@
-# --- Telegram Bot Server with Flask ---
 import os
-import sys
-import logging
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- Config ---
-TOKEN = os.getenv("TELEGRAM_TOKEN")  # Set in Render Dashboard
-PORT = int(os.environ.get("PORT", 8443))  # Render assigns a PORT env var
+TOKEN = os.getenv("BOT_TOKEN")
+PORT = int(os.environ.get("PORT", 5000))
 
-# --- Flask app (for Render web service) ---
 app = Flask(__name__)
 
-# --- Logging ---
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-logger = logging.getLogger(__name__)
+# --- Telegram bot handlers ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Hello! I am alive 🚀")
 
-# --- Telegram Bot Handlers ---
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Hello! 🎉 I’m alive on Render 🚀")
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(update.message.text)
 
-def echo(update: Update, context: CallbackContext):
-    update.message.reply_text(update.message.text)
+application = Application.builder().token(TOKEN).build()
+application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-# --- Initialize Updater/Dispatcher ---
-updater = Updater(TOKEN, use_context=True)
-dispatcher = updater.dispatcher
-
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
-
-# --- Flask route for webhook ---
-@app.route("/" + TOKEN, methods=["POST"])
+# --- Webhook routes for Render ---
+@app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    update = Update.de_json(request.get_json(force=True), updater.bot)
-    dispatcher.process_update(update)
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.update_queue.put_nowait(update)
     return "ok"
 
 @app.route("/")
 def index():
-    return "Bot is running ✅"
+    return "Bot running ✅"
 
-# --- Run app ---
 if __name__ == "__main__":
-    # Set webhook to Render URL
-    WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
-    updater.bot.set_webhook(WEBHOOK_URL)
-    print(f"📡 Webhook set to {WEBHOOK_URL}")
-
-    # Run Flask app
-    app.run(host="0.0.0.0", port=PORT)
-
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        url_path=TOKEN,
+        webhook_url=f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}/{TOKEN}"
+    )
