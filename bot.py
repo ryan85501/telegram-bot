@@ -4,25 +4,19 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 TOKEN = os.getenv("TOKEN")
-ALLOWED_GROUP_ID = os.getenv("ALLOWED_GROUP_ID")
-MINI_APP_URL = os.getenv("MINI_APP_URL")
 
 app = Flask(__name__)
 
-# Create the Application
+# Create Application (no Updater involved in v20+)
 application = Application.builder().token(TOKEN).build()
 
-# --- Handlers ---
+# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! ✅ Bot is running on Render.")
-
-async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"Mini App: {MINI_APP_URL}")
+    await update.message.reply_text("✅ Bot is running on Render!")
 
 application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("app", open_app))
 
-# --- Flask webhook route ---
+# Webhook route
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
@@ -31,7 +25,7 @@ def webhook():
 
 @app.route("/", methods=["GET"])
 def home():
-    return "Bot is running!", 200
+    return "Bot is alive!", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
