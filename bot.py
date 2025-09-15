@@ -1,31 +1,40 @@
 import os
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+PORT = int(os.environ.get("PORT", 8443))
+
 app = Flask(__name__)
 
-# Build Application (v20+ has no Updater)
-application = Application.builder().token(TOKEN).build()
-
-# Simple /start handler
+# --- Telegram bot handlers ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("✅ Bot is running on Render!")
+    await update.message.reply_text("Hello! I'm alive ✅")
 
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(update.message.text)
+
+application = Application.builder().token(TOKEN).build()
 application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-# Webhook route
+# --- Flask webhook ---
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
     application.update_queue.put_nowait(update)
-    return "ok", 200
+    return "ok"
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Bot is alive!", 200
+@app.route("/")
+def index():
+    return "Bot is running ✅"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        url_path=TOKEN,
+        webhook_url=f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
+    )
+    app.run(host="0.0.0.0", port=PORT)
