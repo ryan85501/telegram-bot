@@ -4,13 +4,12 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 TOKEN = os.getenv("TOKEN")
-
 app = Flask(__name__)
 
-# Create Application (no Updater involved in v20+)
+# Build Application (v20+ has no Updater)
 application = Application.builder().token(TOKEN).build()
 
-# Handlers
+# Simple /start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is running on Render!")
 
