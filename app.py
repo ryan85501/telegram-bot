@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get bot token from environment variable
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+TOKEN = os.environ.get('TOKEN')
 # Get allowed group ID from environment variable
 ALLOWED_GROUP_ID = os.environ.get('ALLOWED_GROUP_ID')
 
@@ -31,7 +31,7 @@ except ValueError:
 app = Flask(__name__)
 
 # Create Application
-application = Application.builder().token(BOT_TOKEN).build()
+application = Application.builder().token(TOKEN).build()
 
 async def is_member_of_allowed_group(update: Update) -> bool:
     """Check if the user is a member of the allowed group"""
